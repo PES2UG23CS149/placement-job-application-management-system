@@ -47,3 +47,55 @@ SHORTLISTED
 REJECTED
 SELECTED
 WITHDRAWN
+
+Tech Stack
+Frontend
+React
+Vite
+JavaScript
+HTML5
+CSS3
+Tailwind CSS
+Axios
+React Router
+Backend
+Java 21
+Spring Boot
+Spring Security
+JWT
+Spring Data JPA
+Hibernate
+MySQL
+Maven
+Lombok
+External Services
+Cloudinary – Resume storage
+Postman – API testing
+Git & GitHub – Version control
+Main Modules
+Student Module
+Dashboard
+Student profile
+Resume upload
+Placement drives
+Applications
+Application status tracking
+Admin Module
+Dashboard
+Company management
+Placement drive management
+Applicant management
+Application status management
+Security
+
+The application uses:
+
+Spring Security
+JWT authentication
+BCrypt password hashing
+Role-based authorization
+Protected Student and Admin APIs
+CORS configuration
+Duplicate application prevention
+File type and size validation
+Gitignored local credentials

@@ -95,7 +95,7 @@ placement-job-application-management-system/
 └── mvnw.cmd
 ```
 
-How to Run
+##How to Run
 Backend
 ```
 mvnw.cmd spring-boot:run
@@ -116,11 +116,12 @@ Frontend:
 ```
 http://localhost:5173
 ```
-Author
+---
 
-Chetan Nadichagi
+## Author
 
+**Chetan Nadichagi**  
+Computer Science Engineering  
 PES University, Bengaluru
-```
-GitHub: https://github.com/PES2UG23CS149
-```
+
+GitHub: [PES2UG23CS149](https://github.com/PES2UG23CS149)

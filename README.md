@@ -47,3 +47,80 @@ SHORTLISTED
 REJECTED
 SELECTED
 WITHDRAWN
+
+```
+---
+
+## Tech Stack
+
+### Frontend
+- React.js
+- Vite
+- JavaScript
+- HTML5
+- CSS3
+- Tailwind CSS
+- Axios
+- React Router
+
+### Backend
+- Java 21
+- Spring Boot
+- Spring Security
+- JWT
+- Spring Data JPA
+- Hibernate
+- MySQL
+
+### Tools & Services
+- Cloudinary
+- Postman
+- Git
+- GitHub
+
+---
+
+## Project Structure
+
+```text
+placement-job-application-management-system/
+│
+├── frontend/
+├── src/
+│   └── main/
+│       ├── java/
+│       └── resources/
+├── pom.xml
+├── mvnw
+└── mvnw.cmd
+```
+
+How to Run
+Backend
+```
+mvnw.cmd spring-boot:run
+```
+Backend:
+
+```
+http://localhost:8080
+```
+Frontend
+```
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend:
+```
+http://localhost:5173
+```
+Author
+
+Chetan Nadichagi
+
+PES University, Bengaluru
+```
+GitHub: https://github.com/PES2UG23CS149
+```

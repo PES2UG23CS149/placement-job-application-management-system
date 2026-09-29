@@ -1,258 +1,637 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../api/axios';
-import Layout from '../components/Layout';
-import ApplicationModal from '../components/ApplicationModal';
 
-const STATUS_BADGE = {
-  Sent: 'bg-blue-100 text-blue-700 border-blue-200',
-  Interview: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  Rejected: 'bg-red-100 text-red-700 border-red-200',
-  Offer: 'bg-green-100 text-green-700 border-green-200',
-};
-
-const STATUSES = ['All', 'Sent', 'Interview', 'Rejected', 'Offer'];
-
-export default function ApplicationsPage() {
+function ApplicationsPage() {
   const [applications, setApplications] = useState([]);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('All');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [withdrawingId, setWithdrawingId] = useState(null);
+
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const loadApplications = async (showLoading = true) => {
+    try {
+      if (showLoading) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+
+      setError('');
+
+      const response = await api.get(
+        '/api/student/applications'
+      );
+
+      setApplications(response.data || []);
+    } catch (err) {
+      console.error('Application loading error:', err);
+
+      setError(
+        err.response?.data?.message ||
+        err.response?.data ||
+        'Failed to load applications.'
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    fetchApplications();
+    loadApplications();
   }, []);
 
-  const fetchApplications = () => {
-    setLoading(true);
-    api.get('/api/applications')
-      .then(({ data }) => setApplications(data))
-      .finally(() => setLoading(false));
+  const handleWithdraw = async (applicationId) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to withdraw this application?\n\nYou can reapply later if the placement drive is still open.'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setWithdrawingId(applicationId);
+      setError('');
+      setSuccess('');
+
+      await api.put(
+        `/api/student/applications/${applicationId}/withdraw`
+      );
+
+      setSuccess(
+        'Application withdrawn successfully.'
+      );
+
+      await loadApplications(false);
+    } catch (err) {
+      console.error('Withdrawal error:', err);
+
+      setError(
+        err.response?.data?.message ||
+        err.response?.data ||
+        'Failed to withdraw application.'
+      );
+    } finally {
+      setWithdrawingId(null);
+    }
   };
 
-  const handleDelete = async (id) => {
-    await api.delete(`/api/applications/${id}`);
-    setApplications((prev) => prev.filter((a) => a.id !== id));
-    setDeleteConfirm(null);
+  const counts = useMemo(() => {
+    return {
+      total: applications.length,
+
+      applied: applications.filter(
+        (application) =>
+          application.status === 'APPLIED'
+      ).length,
+
+      shortlisted: applications.filter(
+        (application) =>
+          application.status === 'SHORTLISTED'
+      ).length,
+
+      selected: applications.filter(
+        (application) =>
+          application.status === 'SELECTED'
+      ).length,
+
+      rejected: applications.filter(
+        (application) =>
+          application.status === 'REJECTED'
+      ).length,
+
+      withdrawn: applications.filter(
+        (application) =>
+          application.status === 'WITHDRAWN'
+      ).length,
+    };
+  }, [applications]);
+
+  const filteredApplications = useMemo(() => {
+    const searchText = search.trim().toLowerCase();
+
+    return applications
+      .filter((application) => {
+        const companyName =
+          application.drive?.company?.name?.toLowerCase() || '';
+
+        const jobTitle =
+          application.drive?.jobTitle?.toLowerCase() || '';
+
+        const location =
+          application.drive?.location?.toLowerCase() || '';
+
+        const matchesSearch =
+          !searchText ||
+          companyName.includes(searchText) ||
+          jobTitle.includes(searchText) ||
+          location.includes(searchText);
+
+        const matchesStatus =
+          statusFilter === 'ALL' ||
+          application.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => {
+        const dateA = a.appliedAt
+          ? new Date(a.appliedAt).getTime()
+          : 0;
+
+        const dateB = b.appliedAt
+          ? new Date(b.appliedAt).getTime()
+          : 0;
+
+        return dateB - dateA;
+      });
+  }, [applications, search, statusFilter]);
+
+  const getStatusClasses = (status) => {
+    switch (status) {
+      case 'APPLIED':
+        return 'bg-blue-100 text-blue-700';
+
+      case 'SHORTLISTED':
+        return 'bg-yellow-100 text-yellow-700';
+
+      case 'SELECTED':
+        return 'bg-green-100 text-green-700';
+
+      case 'REJECTED':
+        return 'bg-red-100 text-red-700';
+
+      case 'WITHDRAWN':
+        return 'bg-slate-200 text-slate-700';
+
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
   };
 
-  const handleSaved = (saved) => {
-    setApplications((prev) => {
-      const idx = prev.findIndex((a) => a.id === saved.id);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = saved;
-        return updated;
+  const formatDate = (date) => {
+    if (!date) {
+      return '-';
+    }
+
+    return new Date(date).toLocaleDateString(
+      'en-IN',
+      {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
       }
-      return [saved, ...prev];
-    });
+    );
   };
 
-  const handleExport = async () => {
-    const response = await api.get('/api/applications/export', { responseType: 'blob' });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'applications.xlsx';
-    link.click();
-    window.URL.revokeObjectURL(url);
-  };
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
 
-  const filtered = applications.filter((a) => {
-    const matchStatus = filterStatus === 'All' || a.status === filterStatus;
-    const q = searchQuery.toLowerCase();
-    const matchSearch = !q ||
-      a.companyName?.toLowerCase().includes(q) ||
-      a.position?.toLowerCase().includes(q);
-    return matchStatus && matchSearch;
-  });
+          <div className="mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+              My Applications
+            </h1>
 
-  return (
-    <Layout>
-      <div className="p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Applications</h1>
-            <p className="text-slate-500 text-sm mt-1">{applications.length} total applications</p>
+            <p className="text-slate-500 mt-2">
+              Track the status of your placement applications.
+            </p>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-300 text-slate-600 hover:bg-slate-50 rounded-lg text-sm font-medium transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-              Export Excel
-            </button>
-            <button
-              onClick={() => { setEditTarget(null); setModalOpen(true); }}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Application
-            </button>
-          </div>
-        </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1 max-w-sm">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search company or position..."
-              className="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-10 text-center">
+            <p className="text-slate-500">
+              Loading applications...
+            </p>
           </div>
-          <div className="flex gap-2">
-            {STATUSES.map((s) => (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
-                  filterStatus === s
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          {loading ? (
-            <div className="flex items-center justify-center h-48 text-slate-400">Loading...</div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-48 text-slate-400">
-              <svg className="w-10 h-10 mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p className="text-sm">No applications found</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">Company</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">Position</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">Status</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">Date Applied</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">Notes</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">CV</th>
-                    <th className="px-4 py-3 text-left font-medium text-slate-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filtered.map((app) => (
-                    <tr key={app.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-slate-800">{app.companyName}</td>
-                      <td className="px-4 py-3 text-slate-600">{app.position}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_BADGE[app.status] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                          {app.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-slate-500">
-                        {app.dateApplied ? new Date(app.dateApplied).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-slate-500 max-w-48 truncate" title={app.notes}>
-                        {app.notes || '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {app.cvFileUrl ? (
-                          <a
-                            href={`https://docs.google.com/viewer?url=${encodeURIComponent(app.cvFileUrl)}&embedded=true`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-indigo-600 hover:text-indigo-800 underline text-xs"
-                          >
-                            View CV
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => { setEditTarget(app); setModalOpen(true); }}
-                            className="text-slate-400 hover:text-indigo-600 transition-colors"
-                            title="Edit"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirm(app.id)}
-                            className="text-slate-400 hover:text-red-600 transition-colors"
-                            title="Delete"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
       </div>
+    );
+  }
 
-      {/* Add/Edit modal */}
-      {modalOpen && (
-        <ApplicationModal
-          application={editTarget}
-          onClose={() => { setModalOpen(false); setEditTarget(null); }}
-          onSaved={handleSaved}
-        />
-      )}
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
 
-      {/* Delete confirm dialog */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full">
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">Delete Application</h3>
-            <p className="text-slate-500 text-sm mb-5">Are you sure? This cannot be undone.</p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto">
+
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+            My Applications
+          </h1>
+
+          <p className="text-slate-500 mt-2">
+            Track the status of your placement applications.
+          </p>
         </div>
-      )}
-    </Layout>
+
+        {/* Messages */}
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <span className="font-semibold">Error:</span>{' '}
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <span className="font-semibold">✓</span>{' '}
+            {success}
+          </div>
+        )}
+
+        {/* Summary */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+
+          <SummaryCard
+            label="Total"
+            value={counts.total}
+            color="text-slate-800"
+          />
+
+          <SummaryCard
+            label="Applied"
+            value={counts.applied}
+            color="text-blue-600"
+          />
+
+          <SummaryCard
+            label="Shortlisted"
+            value={counts.shortlisted}
+            color="text-yellow-600"
+          />
+
+          <SummaryCard
+            label="Selected"
+            value={counts.selected}
+            color="text-green-600"
+          />
+
+          <SummaryCard
+            label="Rejected"
+            value={counts.rejected}
+            color="text-red-600"
+          />
+
+          <SummaryCard
+            label="Withdrawn"
+            value={counts.withdrawn}
+            color="text-slate-600"
+          />
+
+        </div>
+
+        {/* Search + Filter */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 mb-6">
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Search Applications
+              </label>
+
+              <input
+                type="text"
+                value={search}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
+                placeholder="Search company, position or location..."
+                className="w-full px-4 py-3 rounded-lg border border-slate-300
+                           focus:outline-none focus:ring-2
+                           focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Status
+              </label>
+
+              <select
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value)
+                }
+                className="w-full px-4 py-3 rounded-lg border border-slate-300
+                           bg-white focus:outline-none
+                           focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="ALL">
+                  All Statuses
+                </option>
+
+                <option value="APPLIED">
+                  Applied
+                </option>
+
+                <option value="SHORTLISTED">
+                  Shortlisted
+                </option>
+
+                <option value="SELECTED">
+                  Selected
+                </option>
+
+                <option value="REJECTED">
+                  Rejected
+                </option>
+
+                <option value="WITHDRAWN">
+                  Withdrawn
+                </option>
+              </select>
+            </div>
+
+          </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+            <p className="text-sm text-slate-500">
+              Showing{' '}
+              <span className="font-semibold text-slate-700">
+                {filteredApplications.length}
+              </span>{' '}
+              application(s)
+            </p>
+
+            {(search || statusFilter !== 'ALL') && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setStatusFilter('ALL');
+                }}
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+              >
+                Clear Filters
+              </button>
+            )}
+
+          </div>
+
+        </div>
+
+        {/* Applications */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+          <div className="px-5 sm:px-6 py-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800">
+                Applications
+              </h2>
+
+              <p className="text-sm text-slate-500 mt-1">
+                Your most recent applications are shown first.
+              </p>
+            </div>
+
+            <button
+              onClick={() => loadApplications(false)}
+              disabled={refreshing}
+              className="px-4 py-2 rounded-lg border border-slate-300
+                         text-sm font-medium text-slate-700
+                         hover:bg-slate-50
+                         disabled:opacity-50
+                         disabled:cursor-not-allowed transition"
+            >
+              {refreshing ? 'Refreshing...' : '↻ Refresh'}
+            </button>
+
+          </div>
+
+          {filteredApplications.length === 0 ? (
+
+            <div className="p-12 text-center">
+
+              <div className="text-4xl mb-4">
+                📄
+              </div>
+
+              <h3 className="font-semibold text-slate-700">
+                {applications.length === 0
+                  ? 'No applications yet'
+                  : 'No applications found'}
+              </h3>
+
+              <p className="text-sm text-slate-500 mt-2">
+                {applications.length === 0
+                  ? 'Apply to a placement drive to see your applications here.'
+                  : 'Try changing your search or status filter.'}
+              </p>
+
+              {applications.length > 0 &&
+                (search || statusFilter !== 'ALL') && (
+                  <button
+                    onClick={() => {
+                      setSearch('');
+                      setStatusFilter('ALL');
+                    }}
+                    className="mt-5 px-5 py-2.5 rounded-lg
+                               bg-indigo-600 hover:bg-indigo-700
+                               text-white font-medium"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+
+            </div>
+
+          ) : (
+
+            <div className="overflow-x-auto">
+
+              <table className="w-full min-w-[850px]">
+
+                <thead className="bg-slate-50 border-b border-slate-200">
+
+                  <tr>
+
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Company
+                    </th>
+
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Position
+                    </th>
+
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Location
+                    </th>
+
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Applied On
+                    </th>
+
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Status
+                    </th>
+
+                    <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Action
+                    </th>
+
+                  </tr>
+
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+
+                  {filteredApplications.map((application) => {
+
+                    const status = application.status;
+
+                    const canWithdraw =
+                      status === 'APPLIED';
+
+                    const isWithdrawing =
+                      withdrawingId === application.id;
+
+                    return (
+                      <tr
+                        key={application.id}
+                        className="hover:bg-slate-50 transition"
+                      >
+
+                        {/* Company */}
+                        <td className="px-6 py-4">
+
+                          <div className="font-semibold text-slate-800">
+                            {application.drive?.company?.name ||
+                              '-'}
+                          </div>
+
+                        </td>
+
+                        {/* Position */}
+                        <td className="px-6 py-4">
+
+                          <div className="text-sm font-medium text-slate-700">
+                            {application.drive?.jobTitle ||
+                              '-'}
+                          </div>
+
+                        </td>
+
+                        {/* Location */}
+                        <td className="px-6 py-4">
+
+                          <div className="text-sm text-slate-600">
+                            {application.drive?.location ||
+                              '-'}
+                          </div>
+
+                        </td>
+
+                        {/* Date */}
+                        <td className="px-6 py-4">
+
+                          <div className="text-sm text-slate-600">
+                            {formatDate(
+                              application.appliedAt
+                            )}
+                          </div>
+
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-6 py-4">
+
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusClasses(status)}`}
+                          >
+                            {status}
+                          </span>
+
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-6 py-4">
+
+                          {canWithdraw ? (
+
+                            <button
+                              onClick={() =>
+                                handleWithdraw(
+                                  application.id
+                                )
+                              }
+                              disabled={isWithdrawing}
+                              className="px-3 py-2 rounded-lg
+                                         bg-orange-500
+                                         text-white text-sm
+                                         font-medium
+                                         hover:bg-orange-600
+                                         disabled:opacity-50
+                                         disabled:cursor-not-allowed
+                                         transition"
+                            >
+                              {isWithdrawing
+                                ? 'Withdrawing...'
+                                : 'Withdraw'}
+                            </button>
+
+                          ) : status === 'WITHDRAWN' ? (
+
+                            <span className="text-sm font-medium text-slate-500">
+                              Withdrawn
+                            </span>
+
+                          ) : (
+
+                            <span className="text-sm text-slate-400">
+                              No action
+                            </span>
+
+                          )}
+
+                        </td>
+
+                      </tr>
+                    );
+                  })}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          )}
+
+        </div>
+
+      </div>
+
+    </div>
   );
 }
+
+function SummaryCard({
+  label,
+  value,
+  color,
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+      <p className="text-sm text-slate-500">
+        {label}
+      </p>
+
+      <p
+        className={`text-2xl font-bold mt-1 ${color}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+export default ApplicationsPage;

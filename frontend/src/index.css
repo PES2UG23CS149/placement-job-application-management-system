@@ -1,15 +1,447 @@
 @import "tailwindcss";
 
-* {
-  box-sizing: border-box;
+/* =========================================================
+   BASE
+   ========================================================= */
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
 }
 
 body {
-  margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease;
 }
 
-#root {
-  width: 100%;
-  min-height: 100vh;
+/* =========================================================
+   DEFAULT THEME
+   DEFAULT = DARK
+   This is the main Placement Portal appearance.
+   ========================================================= */
+
+html[data-theme="default"] body {
+  background-color: #0f172a;
+  color: #e2e8f0;
+}
+
+html[data-theme="default"] .bg-slate-100 {
+  background-color: #0f172a;
+}
+
+html[data-theme="default"] .bg-white {
+  background-color: #1e293b;
+}
+
+html[data-theme="default"] .bg-slate-50 {
+  background-color: #172033;
+}
+
+html[data-theme="default"] .bg-slate-200 {
+  background-color: #334155;
+}
+
+/* Text */
+
+html[data-theme="default"] .text-slate-800 {
+  color: #f1f5f9;
+}
+
+html[data-theme="default"] .text-slate-700 {
+  color: #e2e8f0;
+}
+
+html[data-theme="default"] .text-slate-600 {
+  color: #cbd5e1;
+}
+
+html[data-theme="default"] .text-slate-500 {
+  color: #94a3b8;
+}
+
+html[data-theme="default"] .text-slate-400 {
+  color: #64748b;
+}
+
+/* Borders */
+
+html[data-theme="default"] .border-slate-100 {
+  border-color: #334155;
+}
+
+html[data-theme="default"] .border-slate-200 {
+  border-color: #334155;
+}
+
+html[data-theme="default"] .border-slate-300 {
+  border-color: #475569;
+}
+
+/* Inputs */
+
+html[data-theme="default"] input,
+html[data-theme="default"] textarea,
+html[data-theme="default"] select {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+html[data-theme="default"] input::placeholder,
+html[data-theme="default"] textarea::placeholder {
+  color: #64748b;
+}
+
+html[data-theme="default"] input:disabled {
+  background-color: #172033;
+  color: #94a3b8;
+}
+
+/* Hover */
+
+html[data-theme="default"] .hover\:bg-slate-50:hover {
+  background-color: #273449;
+}
+
+html[data-theme="default"] .hover\:bg-slate-100:hover {
+  background-color: #334155;
+}
+
+/* Links */
+
+html[data-theme="default"] a.text-indigo-600 {
+  color: #818cf8;
+}
+
+/* Buttons */
+
+html[data-theme="default"] button.bg-white {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+html[data-theme="default"] button.bg-white:hover {
+  background-color: #334155;
+}
+
+/* Tables */
+
+html[data-theme="default"] thead {
+  background-color: #172033;
+}
+
+/* =========================================================
+   LIGHT THEME
+   ========================================================= */
+
+html[data-theme="light"] body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .bg-slate-100 {
+  background-color: #f8fafc;
+}
+
+html[data-theme="light"] .bg-white {
+  background-color: #ffffff;
+}
+
+html[data-theme="light"] .bg-slate-50 {
+  background-color: #f8fafc;
+}
+
+html[data-theme="light"] .bg-slate-200 {
+  background-color: #e2e8f0;
+}
+
+/* Text */
+
+html[data-theme="light"] .text-slate-800 {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .text-slate-700 {
+  color: #334155;
+}
+
+html[data-theme="light"] .text-slate-600 {
+  color: #475569;
+}
+
+html[data-theme="light"] .text-slate-500 {
+  color: #64748b;
+}
+
+html[data-theme="light"] .text-slate-400 {
+  color: #94a3b8;
+}
+
+/* Borders */
+
+html[data-theme="light"] .border-slate-100 {
+  border-color: #f1f5f9;
+}
+
+html[data-theme="light"] .border-slate-200 {
+  border-color: #e2e8f0;
+}
+
+html[data-theme="light"] .border-slate-300 {
+  border-color: #cbd5e1;
+}
+
+/* Inputs */
+
+html[data-theme="light"] input,
+html[data-theme="light"] textarea,
+html[data-theme="light"] select {
+  background-color: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #94a3b8;
+}
+
+html[data-theme="light"] input:disabled {
+  background-color: #f8fafc;
+  color: #64748b;
+}
+
+/* =========================================================
+   DARK THEME
+   Slightly deeper than DEFAULT
+   ========================================================= */
+
+html[data-theme="dark"] body {
+  background-color: #020617;
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .bg-slate-100 {
+  background-color: #020617;
+}
+
+html[data-theme="dark"] .bg-white {
+  background-color: #111827;
+}
+
+html[data-theme="dark"] .bg-slate-50 {
+  background-color: #0f172a;
+}
+
+html[data-theme="dark"] .bg-slate-200 {
+  background-color: #1e293b;
+}
+
+/* Text */
+
+html[data-theme="dark"] .text-slate-800 {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .text-slate-700 {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .text-slate-600 {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .text-slate-500 {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .text-slate-400 {
+  color: #64748b;
+}
+
+/* Borders */
+
+html[data-theme="dark"] .border-slate-100 {
+  border-color: #1e293b;
+}
+
+html[data-theme="dark"] .border-slate-200 {
+  border-color: #334155;
+}
+
+html[data-theme="dark"] .border-slate-300 {
+  border-color: #475569;
+}
+
+/* Inputs */
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+  background-color: #111827;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #64748b;
+}
+
+html[data-theme="dark"] input:disabled {
+  background-color: #0f172a;
+  color: #94a3b8;
+}
+
+/* Hover */
+
+html[data-theme="dark"] .hover\:bg-slate-50:hover {
+  background-color: #1e293b;
+}
+
+html[data-theme="dark"] .hover\:bg-slate-100:hover {
+  background-color: #334155;
+}
+
+/* Links */
+
+html[data-theme="dark"] a.text-indigo-600 {
+  color: #818cf8;
+}
+
+/* Buttons */
+
+html[data-theme="dark"] button.bg-white {
+  background-color: #111827;
+  color: #e2e8f0;
+  border-color: #475569;
+}
+
+html[data-theme="dark"] button.bg-white:hover {
+  background-color: #1e293b;
+}
+
+/* Tables */
+
+html[data-theme="dark"] thead {
+  background-color: #0f172a;
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+html[data-theme="default"] .bg-slate-800,
+html[data-theme="light"] .bg-slate-800,
+html[data-theme="dark"] .bg-slate-800 {
+  background-color: #1e293b;
+}
+
+/* Keep sidebar text readable */
+
+html[data-theme="default"] .text-white,
+html[data-theme="light"] .text-white,
+html[data-theme="dark"] .text-white {
+  color: #f8fafc;
+}
+
+/* =========================================================
+   DARK THEME - RECHARTS
+   ========================================================= */
+
+html[data-theme="default"] .recharts-cartesian-grid-horizontal line,
+html[data-theme="default"] .recharts-cartesian-grid-vertical line,
+html[data-theme="dark"] .recharts-cartesian-grid-horizontal line,
+html[data-theme="dark"] .recharts-cartesian-grid-vertical line {
+  stroke: #334155;
+}
+
+html[data-theme="default"] .recharts-text,
+html[data-theme="dark"] .recharts-text {
+  fill: #94a3b8;
+}
+
+/* =========================================================
+   TRANSITIONS
+   ========================================================= */
+
+body,
+.bg-white,
+.bg-slate-50,
+.bg-slate-100,
+.bg-slate-200,
+.text-slate-800,
+.text-slate-700,
+.text-slate-600,
+.text-slate-500,
+.text-slate-400,
+.border-slate-100,
+.border-slate-200,
+.border-slate-300,
+input,
+textarea,
+select {
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+/* =========================================================
+   SCROLLBAR
+   ========================================================= */
+
+html[data-theme="default"] ::-webkit-scrollbar,
+html[data-theme="dark"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html[data-theme="default"] ::-webkit-scrollbar-track,
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+html[data-theme="default"] ::-webkit-scrollbar-thumb,
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+}
+
+html[data-theme="default"] ::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Light scrollbar */
+
+html[data-theme="light"] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

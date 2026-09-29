@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-export default function Layout({ children }) {
+export default function AdminLayout({ children }) {
   const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -25,15 +25,17 @@ export default function Layout({ children }) {
       {/* ================= SIDEBAR ================= */}
       <aside className="w-72 bg-slate-800 flex flex-col flex-shrink-0">
 
-        {/* Logo / Header */}
+        {/* Header */}
         <div className="px-6 py-6 border-b border-slate-700">
-          <h1 className="text-white font-bold text-xl leading-tight">
+
+          <h1 className="text-white font-bold text-xl">
             Placement Portal
           </h1>
 
           <p className="text-slate-400 text-sm mt-1">
-            Student Placement System
+            Administrator Panel
           </p>
+
         </div>
 
         {/* Navigation */}
@@ -41,7 +43,7 @@ export default function Layout({ children }) {
 
           {/* Dashboard */}
           <NavLink
-            to="/student"
+            to="/admin"
             end
             className={navClass}
           >
@@ -55,16 +57,38 @@ export default function Layout({ children }) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                d="M3 13h8V3H3v10zm10 8h8V11h-8v10zM3 21h8v-6H3v6zm10-18v6h8V3h-8z"
               />
             </svg>
 
             Dashboard
           </NavLink>
 
+          {/* Companies */}
+          <NavLink
+            to="/admin/companies"
+            className={navClass}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h1m4 0h1m-6 4h1m4 0h1"
+              />
+            </svg>
+
+            Companies
+          </NavLink>
+
           {/* Placement Drives */}
           <NavLink
-            to="/student/drives"
+            to="/admin/drives"
             className={navClass}
           >
             <svg
@@ -84,9 +108,9 @@ export default function Layout({ children }) {
             Placement Drives
           </NavLink>
 
-          {/* My Applications */}
+          {/* Applicants */}
           <NavLink
-            to="/student/applications"
+            to="/admin/applicants"
             className={navClass}
           >
             <svg
@@ -99,38 +123,16 @@ export default function Layout({ children }) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                d="M17 20h5v-2a4 4 0 00-4-4h-1M9 20H4v-2a4 4 0 014-4h1m4-4a4 4 0 100-8 4 4 0 000 8zm6 4a4 4 0 10-4-4"
               />
             </svg>
 
-            My Applications
-          </NavLink>
-
-          {/* My Profile */}
-          <NavLink
-            to="/student/profile"
-            className={navClass}
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-
-            My Profile
+            Applicants
           </NavLink>
 
         </nav>
 
-        {/* ================= BOTTOM SECTION ================= */}
+        {/* ================= BOTTOM ================= */}
         <div className="border-t border-slate-700">
 
           {/* Theme */}
@@ -147,7 +149,7 @@ export default function Layout({ children }) {
                 onChange={(event) =>
                   setTheme(event.target.value)
                 }
-                className="w-full appearance-none bg-slate-700 text-slate-200 border border-slate-600 rounded-lg px-3 py-2.5 pr-9 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
+                className="w-full appearance-none bg-slate-700 text-slate-200 border border-slate-600 rounded-lg px-3 py-2.5 pr-9 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="default">
                   Default
@@ -162,7 +164,6 @@ export default function Layout({ children }) {
                 </option>
               </select>
 
-              {/* Dropdown arrow */}
               <svg
                 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"
                 fill="none"
@@ -189,7 +190,7 @@ export default function Layout({ children }) {
             </p>
 
             <p className="text-white font-semibold mt-1">
-              Student
+              Administrator
             </p>
 
           </div>
